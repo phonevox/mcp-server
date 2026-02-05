@@ -1,0 +1,7 @@
+.env
+node_modules/
+build/
+
+# This will be rewritten to source a database
+# since this contains sensitive data I will not upload it yet
+src/context/provider.ts
