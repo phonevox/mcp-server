@@ -1,64 +1,29 @@
 import * as z from "zod";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ClientContext } from "../../context/types";
-import { createLogger } from "../../util/logger";
+import { createTool, type ToolDefinition } from "../core/tool";
 import { IxcSoftClient } from "../../services/ixcsoft/client";
 
-export const getDepartmentsSchema = {
-    description: "Lista todos os departamentos de um cliente no IXCSoft",
-    outputSchema: z.object({
-        success: z.boolean(),
-        departments: z.array(z.object()).optional(),
-        message: z.string().optional(),
-    })
+export const tool: ToolDefinition = {
+    name: "ixcsoft.getAllDepartments",
+
+    schema: {
+        description: "Returns all departments",
+        inputSchema: z.object({}),
+    },
+
+    handler: createTool(
+        async (ctx, params: {}) => {
+            ctx.logger.info(`Buscando departamentos`);
+
+            const ixcClient = new IxcSoftClient(ctx.context, {
+                logger: ctx.logger.child("IxcSoftClient")
+            });
+
+            const response = await ixcClient.getDepartments();
+
+            return {
+                departments: response.registros || [],
+                total: response.total || 0
+            }
+        }
+    )
 }
-
-export async function getDepartments(meta: any, context: ClientContext): Promise<CallToolResult> {
-    const logger = createLogger(`${meta.requestId}`)
-    logger.info("Buscando departamentos");
-
-    try {
-        const ixcClient = new IxcSoftClient(context, { logger: logger.child("IxcSoftClient") });
-        const response = await ixcClient.getDepartments();
-
-        // normalize answer
-        const departments = response.registros || [];
-        const total = response.total || 0;
-        const message = `${total} departamentos encontrados.`;
-        return {
-            content: [
-                {
-                    type: "text",
-                    text: message,
-                },
-                {
-                    type: "text",
-                    text: JSON.stringify(departments, null, 2),
-                },
-            ],
-            structuredContent: {
-                success: true,
-                departments: departments,
-                message,
-            },
-        };
-    } catch (error: any) {
-        logger.error("Erro ao listar departamentos", { error });
-        const errorMessage = error.message || "Erro ao listar departamentos";
-        return {
-            content: [
-                {
-                    type: "text",
-                    text: `❌ ${errorMessage}`,
-                },
-            ],
-            structuredContent: {
-                success: false,
-                departments: [],
-                message: errorMessage,
-            },
-            isError: true,
-        };
-    };
-}
-

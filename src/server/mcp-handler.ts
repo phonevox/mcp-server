@@ -4,6 +4,7 @@ import type { Response } from "express";
 import type { ClientContext } from "../context/types";
 import { registerTools } from "../tools";
 import type { AuthenticatedRequest } from "../middleware/auth";
+import { logger } from "../util/logger";
 
 // source: https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.x/src/examples/server/simpleStatelessStreamableHttp.ts
 

@@ -1,38 +1,24 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClientContext } from "../context/types";
-import { getClientByDocument, getClientByDocumentSchema } from "./ixcsoft/getClientByDocument";
 import * as z from "zod/v4";
-import { getClientContracts, getClientContractsSchema } from "./ixcsoft/getContractsByClient";
-import { getDepartments, getDepartmentsSchema } from "./ixcsoft/getDepartments";
+import { tools as ixcsoftTools} from "./ixcsoft";
+import { createLogger } from "../util/logger";
 
-// import { getProducts, getProductsSchema } from "./ixcsoft/get-products.js";
+export function registerTools(server: McpServer, context: ClientContext, requestId: string) {
+  const logger = createLogger(`${requestId}.registerTools`);
 
-export function registerTools(server: McpServer, context: ClientContext, requestId?: string) {
-
-
-  // IXCSoft tools
   if (context.ixcsoft) {
-    server.registerTool(
-      "ixcsoft_get_client_by_document",
-      getClientByDocumentSchema,
-      async (params) => getClientByDocument({ requestId }, context, params)
-    );
-
-    server.registerTool(
-      "ixcsoft_get_client_contracts_by_client",
-      getClientContractsSchema,
-      async (params) => getClientContracts({ requestId }, context, params)
-    );
-
-    server.registerTool(
-      "ixcsoft_list_departments",
-      getDepartmentsSchema,
-      async (params) => getDepartments({ requestId }, context)
-    )
-
+    ixcsoftTools.forEach(tool => {
+      server.registerTool(
+        tool.name, 
+        tool.schema,
+        (params) => tool.handler({ requestId }, context, params)
+      );
+    });
+    logger.debug(`[ixcsoftTools] Registered ${ixcsoftTools.length} tools`, { tools: ixcsoftTools.map(t => t.name) });
   }
 
-  // Outras tools que não dependem de contexto específico
+  // misc tools
   server.registerTool(
     "echo",
     {

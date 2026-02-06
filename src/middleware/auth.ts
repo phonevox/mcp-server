@@ -13,7 +13,7 @@ const SECRET = process.env.JWT_AUTH_SECRET!;
 
 export interface AuthenticatedRequest extends Request {
   clientContext?: ClientContext;
-  requestId?: string;
+  requestId: string;
   logger?: LoggerLike;
 }
 
