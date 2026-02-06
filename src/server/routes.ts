@@ -11,8 +11,6 @@ export const mcpPostRoute = async (
 ) => {
   const clientId = req.clientContext?.clientId;
 
-  logger.info("MCP POST request received", { clientId });
-
   if (!req.clientContext) {
     return res.status(401).json({
       jsonrpc: "2.0",
@@ -27,15 +25,13 @@ export const mcpPostRoute = async (
   try {
     const handler = getMcpHandler(req.clientContext);
     await handler(req, res);
-    logger.info("MCP POST request completed", { clientId });
   } catch (error) {
-    logger.error("MCP POST request failed", { error, clientId });
+    req.logger?.error("MCP POST request failed", { error, clientId });
     throw error;
   }
 };
 
 export const mcpGetRoute = async (req: Request, res: Response) => {
-  logger.warn("Method not allowed", { method: "GET" });
   res.writeHead(405).end(
     JSON.stringify({
       jsonrpc: "2.0",
@@ -46,7 +42,6 @@ export const mcpGetRoute = async (req: Request, res: Response) => {
 };
 
 export const mcpDeleteRoute = async (req: Request, res: Response) => {
-  logger.warn("Method not allowed", { method: "DELETE" });
   res.writeHead(405).end(
     JSON.stringify({
       jsonrpc: "2.0",

@@ -7,29 +7,29 @@ import { getDepartments, getDepartmentsSchema } from "./ixcsoft/getDepartments";
 
 // import { getProducts, getProductsSchema } from "./ixcsoft/get-products.js";
 
-export function registerTools(server: McpServer, context: ClientContext) {
+export function registerTools(server: McpServer, context: ClientContext, requestId?: string) {
 
-    
+
   // IXCSoft tools
   if (context.ixcsoft) {
     server.registerTool(
       "ixcsoft_get_client_by_document",
       getClientByDocumentSchema,
-      async (params) => getClientByDocument(context, params)
+      async (params) => getClientByDocument({ requestId }, context, params)
     );
 
     server.registerTool(
       "ixcsoft_get_client_contracts_by_client",
       getClientContractsSchema,
-      async (params) => getClientContracts(context, params)
+      async (params) => getClientContracts({ requestId }, context, params)
     );
 
     server.registerTool(
       "ixcsoft_list_departments",
       getDepartmentsSchema,
-      async (params) => getDepartments(context)
+      async (params) => getDepartments({ requestId }, context)
     )
-    
+
   }
 
   // Outras tools que não dependem de contexto específico

@@ -5,6 +5,7 @@ import { createLogger } from "../util/logger";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 import type { AuthTokenPayload } from "./auth.types";
+import type { LoggerLike } from "../util/logger";
 
 const logger = createLogger("auth");
 
@@ -12,6 +13,8 @@ const SECRET = process.env.JWT_AUTH_SECRET!;
 
 export interface AuthenticatedRequest extends Request {
   clientContext?: ClientContext;
+  requestId?: string;
+  logger?: LoggerLike;
 }
 
 export const authMiddleware = (
@@ -19,19 +22,15 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction,
 ) => {
+  req.requestId = crypto.randomUUID();
+  req.logger = createLogger(`[${req.requestId}]`);
+
   const authHeader = req.headers.authorization;
 
-  logger.debug(
-    "Incoming request",
-    {
-      method: req.method,
-      path: req.path,
-      hasAuth: !!authHeader,
-    }
-  );
+  req.logger.debug("Incoming request");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    logger.warn("Missing or invalid authorization header",
+    req.logger.warn("Missing or invalid authorization header",
       {
         method: req.method,
         path: req.path,
@@ -51,16 +50,14 @@ export const authMiddleware = (
   try {
     const token = authHeader.substring(7);
     const clientId = decodeClientId(token);
-
-    logger.info("Client authenticated", { clientId });
+    // req.logger.info("Client authenticated", { clientId });
 
     req.clientContext = ContextProvider.getContext(clientId);
-
-    logger.debug("Client context loaded", { clientId, hasIxcsoft: !!req.clientContext.ixcsoft });
+    req.logger.debug(`Client context loaded for client: ${clientId}`);
 
     next();
   } catch (error) {
-    logger.error("Authentication failed", { error });
+    req.logger.error("Authentication failed", { error });
     return res.status(401).json({
       jsonrpc: "2.0",
       error: {

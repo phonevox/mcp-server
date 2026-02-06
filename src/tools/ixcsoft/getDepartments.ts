@@ -13,12 +13,12 @@ export const getDepartmentsSchema = {
     })
 }
 
-export async function getDepartments(context: ClientContext): Promise<CallToolResult> {
-    const logger = createLogger(`tool:ixcsoft:getDepartments:${context.clientId}`);
+export async function getDepartments(meta: any, context: ClientContext): Promise<CallToolResult> {
+    const logger = createLogger(`${meta.requestId}`)
     logger.info("Buscando departamentos");
 
     try {
-        const ixcClient = new IxcSoftClient(context);
+        const ixcClient = new IxcSoftClient(context, { logger: logger.child("IxcSoftClient") });
         const response = await ixcClient.getDepartments();
 
         // normalize answer

@@ -16,12 +16,12 @@ export const getClientContractsSchema = {
     })
 }
 
-export async function getClientContracts(context: ClientContext, params: { id: string }): Promise<CallToolResult> {
-    const logger = createLogger(`tool:ixcsoft:list-client-contracts:${context.clientId}`);
-    logger.info(`Buscando contratos do cliente ${params.id}`);
+export async function getClientContracts(meta: any, context: ClientContext, params: { id: string }): Promise<CallToolResult> {
+    const logger = createLogger(`${meta.requestId}`)
+    logger.info(`Buscando contratos do cliente ID: "${params.id}"`);
 
     try {
-        const ixcClient = new IxcSoftClient(context);
+        const ixcClient = new IxcSoftClient(context, { logger: logger.child("IxcSoftClient") });
         const response = await ixcClient.getContractsByClient(params.id);
 
         // normalize answer

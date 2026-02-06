@@ -3,8 +3,9 @@
 import "dotenv/config";
 import { createApp } from "./server/express-app";
 import { config } from "./config";
-import { logger } from "./util/logger";
+import { createLogger } from "./util/logger";
 
+const logger = createLogger("app");
 const app = createApp();
 
 app.listen(config.port, () => {

@@ -5,6 +5,8 @@ import { createLogger } from "../../util/logger";
 import { IxcSoftClient } from "../../services/ixcsoft/client";
 import { DocumentSchema } from "../../services/ixcsoft/schemas";
 
+const baselogger = createLogger("tool.ixc.getClientByDocument");
+
 export const getClientByDocumentSchema = {
     description: "Busca cliente(s) no IXCSoft a partir do CPF ou CNPJ. O documento necessita estar formatado em CPF XXX.XXX.XXX-XX para CPF ou XX.XXX.XXX/XXXX-XX para CNPJ",
     inputSchema: z.object({
@@ -29,16 +31,15 @@ export const getClientByDocumentSchema = {
 };
 
 export async function getClientByDocument(
+    meta: any,
     context: ClientContext,
     params: { documento: string },
 ): Promise<CallToolResult> {
-    const logger = createLogger(
-        `tool:ixcsoft:get-client-by-document:${context.clientId}`,
-    );
-    logger.info(`Buscando documento ${params.documento}`);
+    const logger = createLogger(`${meta.requestId}`)
+    logger.info(`Searching "${params.documento}"`);
 
     try {
-        const ixcClient = new IxcSoftClient(context);
+        const ixcClient = new IxcSoftClient(context, { logger: logger.child("IxcSoftClient") });
         const response = await ixcClient.getClientByDocument(params.documento);
 
         // normalize answer
@@ -78,11 +79,7 @@ export async function getClientByDocument(
             },
         };
     } catch (error: any) {
-        logger.error("Erro ao buscar cliente", {
-            error,
-            clientId: context.clientId,
-            documento: params.documento,
-        });
+        logger.error(error);
 
         const errorMessage =
             error.message || "Erro desconhecido ao consultar cliente";
