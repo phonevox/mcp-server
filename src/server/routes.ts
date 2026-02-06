@@ -1,17 +1,16 @@
-import type { Request, Response } from "express";
+import type { Request, RequestHandler, Response } from "express";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import { getMcpHandler } from "./mcp-handler";
 import { createLogger } from "../util/logger";
 
 const logger = createLogger("routes");
 
-export const mcpPostRoute = async (
-  req: AuthenticatedRequest,
-  res: Response,
-) => {
-  const clientId = req.clientContext?.clientId;
+export const mcpPostRoute: RequestHandler = async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
 
-  if (!req.clientContext) {
+  const clientId = authReq.clientContext?.clientId;
+
+  if (!authReq.clientContext) {
     return res.status(401).json({
       jsonrpc: "2.0",
       error: {
@@ -23,10 +22,10 @@ export const mcpPostRoute = async (
   }
 
   try {
-    const handler = getMcpHandler(req.clientContext);
-    await handler(req, res);
+    const handler = getMcpHandler(authReq.clientContext);
+    await handler(authReq, res);
   } catch (error) {
-    req.logger?.error("MCP POST request failed", { error, clientId });
+    authReq.logger?.error("MCP POST request failed", { error, clientId });
     throw error;
   }
 };

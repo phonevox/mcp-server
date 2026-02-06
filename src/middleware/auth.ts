@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { ContextProvider } from "../context/provider";
 import type { ClientContext } from "../context/types";
 import { createLogger } from "../util/logger";
@@ -17,25 +17,21 @@ export interface AuthenticatedRequest extends Request {
   logger?: LoggerLike;
 }
 
-export const authMiddleware = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction,
-) => {
-  req.requestId = crypto.randomUUID();
-  req.logger = createLogger(`[${req.requestId}]`);
+export const authMiddleware: RequestHandler = (req, res, next) => {
+  const authReq = req as AuthenticatedRequest;
 
-  const authHeader = req.headers.authorization;
+  authReq.requestId = crypto.randomUUID();
+  authReq.logger = createLogger(`[${authReq.requestId}]`);
 
-  req.logger.debug("Incoming request");
+  const authHeader = authReq.headers.authorization;
+
+  authReq.logger.debug("Incoming request");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    req.logger.warn("Missing or invalid authorization header",
-      {
-        method: req.method,
-        path: req.path,
-      }
-    );
+    authReq.logger.warn("Missing or invalid authorization header", {
+      method: authReq.method,
+      path: authReq.path,
+    });
 
     return res.status(401).json({
       jsonrpc: "2.0",
@@ -50,14 +46,14 @@ export const authMiddleware = (
   try {
     const token = authHeader.substring(7);
     const clientId = decodeClientId(token);
-    // req.logger.info("Client authenticated", { clientId });
 
-    req.clientContext = ContextProvider.getContext(clientId);
-    req.logger.debug(`Client context loaded for client: ${clientId}`);
+    authReq.clientContext = ContextProvider.getContext(clientId);
+    authReq.logger.debug(`Client context loaded for client: ${clientId}`);
 
     next();
   } catch (error) {
-    req.logger.error("Authentication failed", { error });
+    authReq.logger.error("Authentication failed", { error });
+
     return res.status(401).json({
       jsonrpc: "2.0",
       error: {

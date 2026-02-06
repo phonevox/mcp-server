@@ -1,5 +1,5 @@
 {
-  "name": "mcp-server-test",
+  "name": "mcp-server",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
@@ -26,11 +26,18 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.13.4",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
+  },
+  "files": [
+    "build"
+  ],
+  "bin": {
+    "mcp-server": "./build/index.js"
   }
 }

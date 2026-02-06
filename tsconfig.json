@@ -12,9 +12,8 @@
         // Bundler mode
         "moduleResolution": "bundler",
         "exactOptionalPropertyTypes": false,
-        "allowImportingTsExtensions": true,
+        // "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
-        "noEmit": true,
         // Best practices
         "strict": true,
         "skipLibCheck": true,
@@ -24,6 +23,10 @@
         // Some stricter flags (disabled by default)
         "noUnusedLocals": false,
         "noUnusedParameters": false,
-        "noPropertyAccessFromIndexSignature": false
+        "noPropertyAccessFromIndexSignature": false,
+        // stuff
+        "noEmit": false,
+        "outDir": "build",
+        "rootDir": "src",
     }
 }
