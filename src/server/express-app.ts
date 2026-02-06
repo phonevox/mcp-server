@@ -4,6 +4,7 @@ import { mcpPostRoute, mcpGetRoute, mcpDeleteRoute } from "./routes";
 
 export function createApp() {
   const app = createMcpExpressApp();
+  app.set("trust proxy", true);
 
   // Middleware
   app.use('/mcp', authMiddleware);
