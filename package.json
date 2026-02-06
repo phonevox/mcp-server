@@ -1,39 +1,36 @@
 {
-  "type": "module",
   "name": "mcp-server-test",
-  "version": "1.0.0",
-  "description": "A test MCP server implementation",
-  "main": "index.js",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start": "bun ./build/index.js",
-    "preinstall": "npx only-allow bun",
     "inspect": "npx @modelcontextprotocol/inspector",
     "inspector": "npx @modelcontextprotocol/inspector",
-    "install": "bun install",
     "dev": "bun --watch src/index.ts"
   },
-  "keywords": [],
-  "author": "Adrian K.",
-  "license": "AGPL-3.0-or-later",
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.1.0",
-    "typescript": "^5.9.3"
+    "@types/bun": "latest"
   },
-  "bin": {
-    "mcp-server-test": "./build/index.js"
+  "peerDependencies": {
+    "typescript": "^5"
   },
-  "files": [
-    "build"
-  ],
+  "engines": {
+    "bun": ">=1.0.0",
+    "npm": "please-use-bun-instead",
+    "yarn": "please-use-bun-instead",
+    "pnpm": "please-use-bun-instead"
+  },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
-    "dotenv": "^17.2.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@types/express": "^5.0.6",
+    "axios": "^1.13.4",
+    "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "pino": "^10.3.0",
-    "pino-pretty": "^13.1.3",
+    "jsonwebtoken": "^9.0.3",
+    "winston": "^3.19.0",
     "zod": "^4.3.6"
   }
 }
