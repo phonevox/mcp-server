@@ -1,0 +1,15 @@
+services:
+  mcp-phonevox:
+    container_name: mcp-phonevox
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "3299"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
