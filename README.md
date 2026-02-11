@@ -1,3 +1,3 @@
 - `bun install`
-- `bun run build`
-- `bun run start`
+- `bun build`
+- `bun start`
