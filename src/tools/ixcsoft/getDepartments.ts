@@ -1,29 +1,29 @@
 import * as z from "zod";
-import { createTool, type ToolDefinition } from "@/tools/core/tool";
 import { IxcSoftClient } from "@/services/ixcsoft/client";
+import { defineTool, type ToolDefinition } from "@/tools/core/tool";
 
-export const tool: ToolDefinition = {
-    name: "ixcsoft.getAllDepartments",
+export const tool: ToolDefinition = defineTool(
+	"ixcsoft.getAllDepartments",
+	"Returns all departments",
+	z.object({}),
+)
+	.handler(async (ctx, params) => {
+		ctx.logger.info(`Searching contracts for client ID: "${params.id}"`);
 
-    schema: {
-        description: "Returns all departments",
-        inputSchema: z.object({}),
-    },
+		const ixcsoft = new IxcSoftClient(ctx.context, {
+			logger: ctx.logger?.child("IxcSoftClient"),
+		});
 
-    handler: createTool(
-        async (ctx, params: {}) => {
-            ctx.logger.info(`Buscando departamentos`);
+		const response = await ixcsoft.getDepartments();
 
-            const ixcClient = new IxcSoftClient(ctx.context, {
-                logger: ctx.logger.child("IxcSoftClient")
-            });
-
-            const response = await ixcClient.getDepartments();
-
-            return {
-                departments: response.registros || [],
-                total: response.total || 0
-            }
-        }
-    )
-}
+		return {
+			departments: (response.registros || []).map((c) => ({
+				id: c.id,
+				setor: c.setor,
+			})),
+			total: response.total || 0,
+		};
+	})
+	.formatMessage((result) => `Found ${result.total} departments`)
+	.formatData((result) => result.departments)
+	.build();

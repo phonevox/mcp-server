@@ -1,3 +1,3 @@
 export type AuthTokenPayload = {
-  clientId: string;
+	clientId: string;
 };

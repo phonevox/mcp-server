@@ -11,7 +11,7 @@
     "inspector": "npx @modelcontextprotocol/inspector",
     "dev": "bun --watch src/index.ts",
     "lint": "biome check .",
-    "lint:fix": "biome check . --apply",
+    "lint:fix": "biome check . --fix ./src",
     "format": "biome format . --write"
   },
   "devDependencies": {
