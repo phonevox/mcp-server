@@ -6,9 +6,9 @@ import { createApp } from "@/server/express-app";
 import { createLogger } from "@/shared/logger";
 
 const logger = createLogger("app");
-const app = createApp();
 
 async function bootstrap() {
+	const app = createApp();
 	app.listen(config.port, () => {
 		logger.info(`MCP Server running at port ${config.port} (env: ${config.nodeEnv})`);
 	});
