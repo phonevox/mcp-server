@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import "dotenv/config";
-import { createApp } from "./server/express-app";
-import { config } from "./config";
-import { createLogger } from "./util/logger";
+import { createApp } from "@/server/express-app";
+import { config } from "@/config";
+import { createLogger } from "@/shared/logger";
 
 const logger = createLogger("app");
 const app = createApp();

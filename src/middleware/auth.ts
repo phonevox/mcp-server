@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
-import { ContextProvider } from "../context/provider";
-import type { ClientContext } from "../context/types";
-import { createLogger } from "../util/logger";
+import { ContextProvider } from "@/context/provider";
+import type { ClientContext } from "@/context/types";
+import { createLogger } from "@/shared/logger";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
-import type { AuthTokenPayload } from "./auth.types";
-import type { LoggerLike } from "../util/logger";
+import type { AuthTokenPayload } from "@/middleware/auth.types";
+import type { LoggerLike } from "@/shared/logger";
 
 const logger = createLogger("auth");
 

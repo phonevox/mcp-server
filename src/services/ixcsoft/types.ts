@@ -1,6 +1,6 @@
 // src/services/ixcsoft/types.ts
 import type { z } from "zod";
-import type { ClientSchema, ListClientResponseSchema, ContractSchema, ListContractResponseSchema } from "./schemas";
+import type { ClientSchema, ListClientResponseSchema, ContractSchema, ListContractResponseSchema } from "@/services/ixcsoft/schemas";
 
 export type Client = z.infer<typeof ClientSchema>;
 export type ListClientResponse = z.infer<typeof ListClientResponseSchema>;

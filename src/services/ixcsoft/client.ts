@@ -1,6 +1,6 @@
-import type { ClientContext } from "../../context/types";
-import { BaseHttpClient } from "../http/BaseHttpClient";
-import { ListClientResponseSchema, ListContractResponseSchema, ListDepartmentsResponseSchema } from "./schemas";
+import type { ClientContext } from "@/context/types";
+import { BaseHttpClient } from "@/services/http/BaseHttpClient";
+import { ListClientResponseSchema, ListContractResponseSchema, ListDepartmentsResponseSchema } from "@/services/ixcsoft/schemas";
 
 export class IxcSoftClient extends BaseHttpClient {
     private readonly clientId: string;

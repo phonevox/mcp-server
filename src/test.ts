@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { decodeClientId, generateToken } from "./middleware/auth";
+import { decodeClientId, generateToken } from "@/middleware/auth";
 
 const [, , command, token] = process.argv;
 

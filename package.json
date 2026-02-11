@@ -9,7 +9,10 @@
     "start": "bun ./build/index.js",
     "inspect": "npx @modelcontextprotocol/inspector",
     "inspector": "npx @modelcontextprotocol/inspector",
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --apply",
+    "format": "biome format . --write"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -24,6 +27,7 @@
     "pnpm": "please-use-bun-instead"
   },
   "dependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",

@@ -28,5 +28,11 @@
         "noEmit": false,
         "outDir": "build",
         "rootDir": "src",
+        "baseUrl": "./src",
+        "paths": {
+            "@/*": [
+                "*"
+            ]
+        }
     }
 }

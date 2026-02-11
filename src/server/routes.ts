@@ -1,7 +1,7 @@
 import type { Request, RequestHandler, Response } from "express";
-import type { AuthenticatedRequest } from "../middleware/auth";
-import { getMcpHandler } from "./mcp-handler";
-import { createLogger } from "../util/logger";
+import type { AuthenticatedRequest } from "@/middleware/auth";
+import { getMcpHandler } from "@/server/mcp-handler";
+import { createLogger } from "@/shared/logger";
 
 const logger = createLogger("routes");
 

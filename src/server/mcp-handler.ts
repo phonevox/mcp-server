@@ -1,10 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Response } from "express";
-import type { ClientContext } from "../context/types";
-import { registerTools } from "../tools";
-import type { AuthenticatedRequest } from "../middleware/auth";
-import { logger } from "../util/logger";
+import type { ClientContext } from "@/context/types";
+import { registerTools } from "@/tools";
+import type { AuthenticatedRequest } from "@/middleware/auth";
 
 // source: https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.x/src/examples/server/simpleStatelessStreamableHttp.ts
 
@@ -37,7 +36,10 @@ export function getMcpHandler(context: ClientContext) {
       await server.connect(transport);
 
       req.logger?.debug('Handling request', { body: req.body });
-      req.logger?.info(`${req.body.method}/${req.body.params.name}`);
+      if (req?.body?.params?.name) {
+        // probably a tool call
+        req.logger?.info(`${req.body.method}/${req.body.params.name}`);
+      }
       await transport.handleRequest(req, res, req.body);
 
       res.on("close", () => {
@@ -46,7 +48,8 @@ export function getMcpHandler(context: ClientContext) {
         server.close();
       });
     } catch (error) {
-      req.logger?.error("Error handling MCP request", { error });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      req.logger?.error(`Error handling MCP request: ${errorMessage || "no message"}`, { error });
       if (!res.headersSent) {
         res.status(500).json({
           jsonrpc: "2.0",

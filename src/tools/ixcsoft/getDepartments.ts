@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { createTool, type ToolDefinition } from "../core/tool";
-import { IxcSoftClient } from "../../services/ixcsoft/client";
+import { createTool, type ToolDefinition } from "@/tools/core/tool";
+import { IxcSoftClient } from "@/services/ixcsoft/client";
 
 export const tool: ToolDefinition = {
     name: "ixcsoft.getAllDepartments",

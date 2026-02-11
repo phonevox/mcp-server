@@ -1,8 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClientContext } from "../context/types";
+import type { ClientContext } from "@/context/types";
 import * as z from "zod/v4";
-import { tools as ixcsoftTools} from "./ixcsoft";
-import { createLogger } from "../util/logger";
+import { tools as ixcsoftTools} from "@/tools/ixcsoft";
+import { createLogger } from "@/shared/logger";
 
 export function registerTools(server: McpServer, context: ClientContext, requestId: string) {
   const logger = createLogger(`${requestId}.registerTools`);

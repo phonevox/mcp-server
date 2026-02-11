@@ -1,7 +1,7 @@
 // core/tool.ts
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ClientContext } from "../../context/types";
-import { createLogger } from "../../util/logger";
+import type { ClientContext } from "@/context/types";
+import { createLogger } from "@/shared/logger";
 import type { ZodObject } from "zod";
 
 export type ToolContext = {

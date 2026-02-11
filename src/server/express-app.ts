@@ -1,6 +1,6 @@
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
-import { authMiddleware } from "../middleware/auth";
-import { mcpPostRoute, mcpGetRoute, mcpDeleteRoute } from "./routes";
+import { authMiddleware } from "@/middleware/auth";
+import { mcpPostRoute, mcpGetRoute, mcpDeleteRoute } from "@/server/routes";
 
 const ALLOWED_HOSTS = process.env.MCP_ALLOWED_HOSTS?.toString().split(",") || ["*"];
 
