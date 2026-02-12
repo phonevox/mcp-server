@@ -9,8 +9,8 @@ const logger = createLogger("app");
 
 async function bootstrap() {
 	const app = createApp();
-	app.listen(config.port, () => {
-		logger.info(`MCP Server running at port ${config.port} (env: ${config.nodeEnv})`);
+	app.listen(config.EXPRESS_PORT, () => {
+		logger.info(`MCP Server running at port ${config.EXPRESS_PORT} (env: ${config.NODE_ENV})`);
 	});
 }
 
