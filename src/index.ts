@@ -6,28 +6,15 @@ import { createApp } from "@/server/express-app";
 import { createLogger } from "@/shared/logger";
 
 const logger = createLogger("app");
-const app = createApp();
 
-app.listen(config.port, () => {
-	logger.info(`🚀 MCP-Server running at port ${config.port} (env: ${config.nodeEnv})`);
-});
+async function bootstrap() {
+	const app = createApp();
+	app.listen(config.EXPRESS_PORT, () => {
+		logger.info(`MCP Server running at port ${config.EXPRESS_PORT} (env: ${config.NODE_ENV})`);
+	});
+}
 
-process.on("SIGINT", async () => {
-	logger.info("🛑 SIGINT received, shutting down gracefully...");
-	process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-	logger.info("🛑 SIGTERM received, shutting down gracefully...");
-	process.exit(0);
-});
-
-process.on("uncaughtException", (error) => {
-	logger.error("💥 Uncaught Exception", { error });
-	process.exit(1);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-	logger.error("💥 Unhandled Rejection", { reason, promise });
+bootstrap().catch((err) => {
+	logger.error(`Fatal: ${err?.message}`, err);
 	process.exit(1);
 });

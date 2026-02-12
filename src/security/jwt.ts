@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
+import { config } from "@/config";
 
-if (!process.env.JWT_SECRET) {
+if (!config.JWT_SECRET) {
 	throw new Error("JWT_SECRET is not defined");
 }
 
-const SECRET: string = process.env.JWT_SECRET;
+const SECRET = Buffer.from(config.JWT_SECRET);
 
 export function verify<T>(token: string): T {
 	try {
