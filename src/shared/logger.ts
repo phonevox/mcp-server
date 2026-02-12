@@ -46,6 +46,8 @@ const consoleFormat = combine(
 // );
 
 export const logger = winston.createLogger({
+	// @NOTE(adrian): willingly using process.env here to
+	// keep this logger module reusable in other projects
 	level: process.env.NODE_ENV === "production" ? "info" : "debug",
 	format: combine(),
 	transports: [

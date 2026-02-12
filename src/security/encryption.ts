@@ -1,14 +1,14 @@
 import crypto from "node:crypto";
+import { config } from "@/config";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 
-if (!process.env.ENCRYPTION_KEY) {
+if (!config.ENCRYPTION_KEY) {
 	throw new Error("ENCRYPTION_KEY is not defined");
 }
-const SECRET: string = process.env.ENCRYPTION_KEY;
 
-const KEY: Buffer = crypto.scryptSync(SECRET, "salt", 32);
+const KEY: Buffer = crypto.scryptSync(config.ENCRYPTION_KEY, "salt", 32);
 
 export const encrypt = (text: string | null | undefined): string | null => {
 	if (!text) return null;
