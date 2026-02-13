@@ -1,8 +1,8 @@
 generator client {
-    provider = "prisma-client"
-    output = "../generated/prisma"
+    provider   = "prisma-client"
+    output     = "../generated/prisma"
     engineType = "client"
-    runtime = "bun"
+    runtime    = "bun"
 }
 
 datasource db {
@@ -22,7 +22,7 @@ model Client {
 model ClientToken {
     id           String    @id @default(uuid())
     client_id    String
-    token_hash   String
+    token_hash   String    @unique
     description  String?
     is_active    Boolean   @default(true)
     expires_at   DateTime?

@@ -1,32 +1,38 @@
 import crypto from "node:crypto";
-import type { Request, RequestHandler } from "express";
+import type { NextFunction, Request, Response } from "express";
+import * as z from "zod";
+import type { ClientContext } from "@/context/provider";
 import { ContextProvider } from "@/context/provider";
-import type { ClientContext } from "@/context/types";
-import type { AuthTokenPayload } from "@/middleware/auth.types";
+import { db } from "@/database";
 import * as jwt from "@/security/jwt";
 import { createLogger, type Logger } from "@/shared/logger";
 
-export interface AuthenticatedRequest extends Request {
+const TokenPayloadSchema = z.object({
+	clientId: z.uuid(),
+	tokenId: z.uuid(),
+});
+
+export type AuthenticatedRequest = Request & {
 	clientContext?: ClientContext;
 	requestId: string;
-	logger?: Logger;
-}
+	logger: Logger;
+};
 
-export const authMiddleware: RequestHandler = (req, res, next) => {
-	const authReq = req as AuthenticatedRequest;
+export const authMiddleware = async (_req: Request, res: Response, next: NextFunction) => {
+	// @FIXME(adrian): this seems wrong. oh well
+	let logger: Logger;
+	const req = _req as AuthenticatedRequest;
 
-	authReq.requestId = crypto.randomUUID();
-	authReq.logger = createLogger(`[${authReq.requestId}]`);
+	req.requestId = crypto.randomUUID();
+	req.logger = createLogger(`[${req.requestId}]`);
+	logger = req.logger; // lazy
 
-	const authHeader = authReq.headers.authorization;
+	logger.debug("Incoming request");
 
-	authReq.logger.debug("Incoming request");
-
+	// check for auth
+	const authHeader = req.headers.authorization;
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
-		authReq.logger.warn("Missing or invalid authorization header", {
-			method: authReq.method,
-			path: authReq.path,
-		});
+		logger.warn("Missing or invalid authorization header");
 
 		return res.status(401).json({
 			jsonrpc: "2.0",
@@ -38,28 +44,33 @@ export const authMiddleware: RequestHandler = (req, res, next) => {
 		});
 	}
 
+	// validate
 	try {
-		const token = authHeader.substring(7);
+		const token = authHeader.substring(7).trim();
+		const decoded = jwt.verify(token);
+		const tokenPayload = TokenPayloadSchema.parse(decoded);
 
-		const payload = jwt.verify<AuthTokenPayload>(token);
+		const dbToken = await db.Clients.findTokenById(tokenPayload.tokenId);
 
-		if (!payload.clientId) {
-			throw new Error("Missing clientId");
-		}
+		if (!dbToken || !dbToken.is_active) throw new Error("Token revoked or not found");
+		if (dbToken.expires_at && dbToken.expires_at < new Date()) throw new Error("Token expired");
+		if (dbToken.client_id !== tokenPayload.clientId) throw new Error("Token/Client mismatch");
+		await db.Clients.updateTokenLastUsed(dbToken.id);
 
-		authReq.clientContext = ContextProvider.getContext(payload.clientId);
+		req.clientContext = await ContextProvider.getContext(dbToken.client_id);
+		logger.debug(`Context loaded for client ${dbToken.client_id}`);
 
-		authReq.logger.debug(`Client context loaded for client: ${payload.clientId}`);
-
-		next();
+		return next();
 	} catch (error) {
-		authReq.logger.error("Authentication failed", { error });
+		req.logger.error("Authentication failed", {
+			message: error instanceof Error ? error.message : "Unknown error",
+		});
 
 		return res.status(401).json({
 			jsonrpc: "2.0",
 			error: {
 				code: -32000,
-				message: "Invalid authentication token",
+				message: "Authentication failed. Please check your credentials and try again.",
 			},
 			id: null,
 		});
