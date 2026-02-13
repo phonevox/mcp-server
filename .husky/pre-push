@@ -1,0 +1,3 @@
+git diff HEAD --quiet || 
+bun run test 
+bun run lint
