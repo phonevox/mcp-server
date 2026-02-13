@@ -13,7 +13,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check . --fix ./src",
     "format": "biome format . --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate-key": "bun src/scripts/generate-key.ts",
+    "create-user-key": "bun src/scripts/create-user-key.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -41,6 +43,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "lru-cache": "^11.2.6",
     "pg": "^8.18.0",
     "prisma": "^7.4.0",
     "winston": "^3.19.0",

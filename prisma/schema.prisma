@@ -9,26 +9,26 @@ datasource db {
     provider = "postgresql"
 }
 
-model Client {
-    id         String        @id @default(uuid())
+model Companies {
+    id         String         @id @default(uuid())
     name       String
-    slug       String        @unique
-    is_active  Boolean       @default(true)
-    tokens     ClientToken[]
-    created_at DateTime      @default(now())
-    updated_at DateTime      @updatedAt
+    slug       String         @unique
+    is_active  Boolean        @default(true)
+    tokens     CompanyToken[]
+    created_at DateTime       @default(now())
+    updated_at DateTime       @updatedAt
 }
 
-model ClientToken {
+model CompanyToken {
     id           String    @id @default(uuid())
-    client_id    String
+    company_id   String
     token_hash   String    @unique
     description  String?
     is_active    Boolean   @default(true)
     expires_at   DateTime?
     last_used_at DateTime?
 
-    client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+    company Companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
     created_at DateTime @default(now())
 }
