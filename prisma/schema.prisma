@@ -1,0 +1,34 @@
+generator client {
+    provider = "prisma-client"
+    output = "../generated/prisma"
+    engineType = "client"
+    runtime = "bun"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model Client {
+    id         String        @id @default(uuid())
+    name       String
+    slug       String        @unique
+    is_active  Boolean       @default(true)
+    tokens     ClientToken[]
+    created_at DateTime      @default(now())
+    updated_at DateTime      @updatedAt
+}
+
+model ClientToken {
+    id           String    @id @default(uuid())
+    client_id    String
+    token_hash   String
+    description  String?
+    is_active    Boolean   @default(true)
+    expires_at   DateTime?
+    last_used_at DateTime?
+
+    client Client @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+    created_at DateTime @default(now())
+}
