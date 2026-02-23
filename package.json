@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",
     "build": "tsc",
-    "start": "bun ./build/index.js",
+    "start": "bun ./build/src/index.js",
     "inspect": "npx @modelcontextprotocol/inspector",
     "inspector": "npx @modelcontextprotocol/inspector",
     "dev": "bun --watch src/index.ts",
