@@ -1,18 +1,23 @@
 import crypto from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
-import type { ClientContext } from "@/context/provider";
+import type { Context } from "@/context/provider";
 import { ContextProvider } from "@/context/provider";
 import { db } from "@/database";
 import { hashToken } from "@/security/hash";
 import { createLogger, type Logger } from "@/shared/logger";
 
 export type AuthenticatedRequest = Request & {
-	clientContext?: ClientContext;
+	context: Context | undefined;
 	requestId: string;
 	logger: Logger;
 };
 
-export const authMiddleware = async (_req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (
+	_req: Request,
+	res: Response,
+	next: NextFunction,
+	// biome-ignore lint/suspicious/noConfusingVoidType: stfu
+): Promise<void | Response> => {
 	// @FIXME(adrian): this seems wrong. oh well
 	let logger: Logger;
 	const req = _req as AuthenticatedRequest;
@@ -40,28 +45,26 @@ export const authMiddleware = async (_req: Request, res: Response, next: NextFun
 
 	// validate
 	try {
-		const token = authHeader.substring(7).trim();
-		// logger.debug(`Validating token: ${token}`);
-		const hash = hashToken(token);
-		// logger.debug(`Token hash: ${hash}`);
+		const rawToken = authHeader.substring(7).trim();
+		const token = await db.Tokens.findByHash(hashToken(rawToken));
+		// logger.debug(`Token found: ${token?.id}`);
 
-		const dbToken = await db.Tokens.findByHash(hash);
-		// logger.debug(`Token found: ${dbToken?.id}`);
+		// validating token
+		if (!token || !token.is_active) throw new Error("Token revoked or not found");
+		if (token.expires_at && token.expires_at < new Date()) throw new Error("Token expired");
+		await db.Tokens.updateLastUsed(token.id);
+		// logger.debug(`Valid token ${token.id}`);
 
-		if (!dbToken || !dbToken.is_active) throw new Error("Token revoked or not found");
-		if (dbToken.expires_at && dbToken.expires_at < new Date()) throw new Error("Token expired");
-
-		const company = await db.CompaniesRepo.findById(dbToken.company_id);
-		if (!company) throw new Error("Company not found");
-
+		const ctx = await ContextProvider.getContext(token.id);
+		if (!ctx) {
+			logger.error(`Failed to load context for token ${token.id}`);
+			throw new Error("Failed to load context");
+		}
+		req.context = ctx;
+		req.logger = createLogger(`[${req.requestId}:${ctx.companySlug}]`);
 		logger.info(
-			`Authenticated token ${dbToken.id} for company ${dbToken.company_id} (${company.slug})`,
+			`Authenticated request for company ${ctx.companyName} (${ctx.companySlug}), integration ${ctx.integrationType}`,
 		);
-		await db.Tokens.updateLastUsed(dbToken.id);
-
-		req.clientContext = await ContextProvider.getContext(dbToken.company_id);
-		req.logger = createLogger(`[${req.requestId}:${company.slug}]`);
-		// logger.debug(`Context loaded for company ${dbToken.company_id} (${dbToken.company.slug})`);
 
 		return next();
 	} catch (error) {

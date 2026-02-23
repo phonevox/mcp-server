@@ -15,7 +15,11 @@
     "format": "biome format . --write",
     "prepare": "husky",
     "generate-key": "bun src/scripts/generate-key.ts",
-    "create-user-key": "bun src/scripts/create-user-key.ts"
+    "create-user-key": "bun src/scripts/create-user-key.ts",
+    "create-company": "bun src/scripts/create-company.ts",
+    "create-integration": "bun src/scripts/create-integration.ts",
+    "create-token": "bun src/scripts/create-token.ts",
+    "decode": "bun src/scripts/decode.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

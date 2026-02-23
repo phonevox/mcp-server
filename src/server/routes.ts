@@ -1,13 +1,13 @@
-import type { Request, RequestHandler, Response } from "express";
-import type { AuthenticatedRequest } from "@/middleware/auth";
+import type { RequestHandler } from "express";
+import type { AuthenticatedRequest } from "@/middleware/authenticate";
 import { getMcpHandler } from "@/server/mcp-handler";
 
-export const mcpPostRoute: RequestHandler = async (req, res) => {
-	const authReq = req as AuthenticatedRequest;
+export const mcpPostRoute: RequestHandler = async (_req, res) => {
+	const req = _req as AuthenticatedRequest;
 
-	const clientId = authReq.clientContext?.clientId;
+	const clientId = req.context?.companyId;
 
-	if (!authReq.clientContext) {
+	if (!req.context) {
 		return res.status(401).json({
 			jsonrpc: "2.0",
 			error: {
@@ -19,30 +19,30 @@ export const mcpPostRoute: RequestHandler = async (req, res) => {
 	}
 
 	try {
-		const handler = getMcpHandler(authReq.clientContext);
-		await handler(authReq, res);
+		const handler = getMcpHandler(req.context);
+		await handler(req, res);
 	} catch (error) {
-		authReq.logger?.error("MCP POST request failed", { error, clientId });
+		req.logger?.error("MCP POST request failed", { error, clientId });
 		throw error;
 	}
 };
 
-export const mcpGetRoute = async (_req: Request, res: Response) => {
-	res.writeHead(405).end(
-		JSON.stringify({
-			jsonrpc: "2.0",
-			error: { code: -32000, message: "Method not allowed." },
-			id: null,
-		}),
-	);
-};
+// export const mcpGetRoute = async (_req: Request, res: Response) => {
+// 	res.writeHead(405).end(
+// 		JSON.stringify({
+// 			jsonrpc: "2.0",
+// 			error: { code: -32000, message: "Method not allowed." },
+// 			id: null,
+// 		}),
+// 	);
+// };
 
-export const mcpDeleteRoute = async (_req: Request, res: Response) => {
-	res.writeHead(405).end(
-		JSON.stringify({
-			jsonrpc: "2.0",
-			error: { code: -32000, message: "Method not allowed." },
-			id: null,
-		}),
-	);
-};
+// export const mcpDeleteRoute = async (_req: Request, res: Response) => {
+// 	res.writeHead(405).end(
+// 		JSON.stringify({
+// 			jsonrpc: "2.0",
+// 			error: { code: -32000, message: "Method not allowed." },
+// 			id: null,
+// 		}),
+// 	);
+// };

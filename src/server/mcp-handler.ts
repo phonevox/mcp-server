@@ -1,18 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Response } from "express";
-import type { ClientContext } from "@/context/types";
-import type { AuthenticatedRequest } from "@/middleware/auth";
+import type { Context } from "@/context/provider";
+import type { AuthenticatedRequest } from "@/middleware/authenticate";
 import { registerTools } from "@/tools";
 
 // source: https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.x/src/examples/server/simpleStatelessStreamableHttp.ts
 
-export function getMcpHandler(context: ClientContext) {
+export function getMcpHandler(context: Context) {
 	return async (req: AuthenticatedRequest, res: Response) => {
-		req.logger?.debug("Creating MCP server instance");
+		req.logger.debug("Creating MCP server instance");
 		const server = new McpServer(
 			{
-				name: `MCP-${context.clientId}`,
+				name: `MCP-${context.companySlug}`,
 				version: "1.0.0",
 			},
 			{
@@ -23,7 +23,7 @@ export function getMcpHandler(context: ClientContext) {
 		);
 
 		// Registrar tools com o contexto do cliente
-		req.logger?.debug("Registering tools");
+		req.logger.debug("Registering tools");
 		registerTools(server, context, req.requestId);
 
 		try {
@@ -34,10 +34,10 @@ export function getMcpHandler(context: ClientContext) {
 			// req.logger?.debug("Connecting transport");
 			await server.connect(transport);
 
-			req.logger?.debug("Handling request", { body: req.body });
-			if (req?.body?.params?.name) {
+			req.logger.debug("Handling request", { body: req.body });
+			if (req.body.params?.name) {
 				// probably a tool call
-				req.logger?.info(`${req.body.method}/${req.body.params.name}`);
+				req.logger.info(`${req.body.method}/${req.body.params.name}`);
 			}
 			await transport.handleRequest(req, res, req.body);
 
