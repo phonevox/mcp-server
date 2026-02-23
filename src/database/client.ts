@@ -1,4 +1,5 @@
 import { LRUCache } from "lru-cache";
+import { config } from "@/config";
 import { prisma } from "@/database/prisma";
 import { decrypt } from "@/security/encryption";
 import { createLogger } from "@/shared/logger";
@@ -14,17 +15,17 @@ const logger = createLogger("database:cache");
 
 const tokenCache = new LRUCache<string, CompanyTokenType>({
 	max: 5000,
-	ttl: 1000 * 60 * 60, // 1h
+	ttl: config.DB_TOKEN_CACHE_TTL,
 });
 
 const companyCache = new LRUCache<string, CompaniesType>({
 	max: 2000,
-	ttl: 1000 * 60 * 60, // 1h
+	ttl: config.DB_COMPANY_CACHE_TTL,
 });
 
 const integrationCache = new LRUCache<string, IntegrationType>({
 	max: 2000,
-	ttl: 1000 * 60 * 60, // 1h
+	ttl: config.DB_INTEGRATION_CACHE_TTL,
 });
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
