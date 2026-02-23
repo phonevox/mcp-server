@@ -10,6 +10,7 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 #build
+RUN bunx prisma generate
 RUN bun run build
 
 CMD ["bun", "run", "start"]
