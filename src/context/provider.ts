@@ -12,54 +12,28 @@ export type Context = {
 	integrationType: Integration["type"];
 };
 
-const logger = createLogger("contextprovider");
+const logger = createLogger("context.provider:cache");
 
 const cache = new LRUCache<string, Context>({
 	max: 5000,
 	ttl: config.CONTEXT_CACHE_TTL,
 });
 
-async function loadFromDatabase(tokenId: string): Promise<Context | undefined> {
-	// Valida o token primeiro — os demais dependem dele
+async function buildContext(tokenId: string): Promise<Context> {
 	const token = await db.Tokens.findById(tokenId);
+	if (!token) throw new Error(`Token not found: ${tokenId}`);
 
-	if (!token || !token.is_active) {
-		logger.debug(`loadFromDatabase: Token not found or inactive -> ${tokenId}`);
-		return undefined;
-	}
-
-	if (token.expires_at && token.expires_at < new Date()) {
-		logger.debug(`loadFromDatabase: Token expired -> ${tokenId}`);
-		return undefined;
-	}
-
-	// Company e integration são independentes entre si — busca em paralelo
 	const [company, integration] = await Promise.all([
 		db.Companies.findById(token.company_id),
 		db.Integrations.findById(token.integration_id),
 	]);
 
-	if (!company || !company.is_active) {
-		logger.debug(`loadFromDatabase: Company not found or inactive -> ${tokenId}`);
-		return undefined;
-	}
+	if (!company) throw new Error(`Company not found for token: ${tokenId}`);
+	if (!integration) throw new Error(`Integration not found for token: ${tokenId}`);
 
-	if (!integration || !integration.is_active) {
-		logger.debug(`loadFromDatabase: Integration not found or inactive -> ${tokenId}`);
-		return undefined;
-	}
-
-	// Garante que o token não aponta para uma integration de outra empresa
 	if (integration.company_id !== company.id) {
-		logger.debug(
-			`loadFromDatabase: Integration ${integration.id} does not belong to company ${company.id} -> ${tokenId}`,
-		);
-		return undefined;
+		throw new Error(`Integration ${integration.id} does not belong to company ${company.id}`);
 	}
-
-	logger.debug(
-		`loadFromDatabase: Successfully loaded context for token ${tokenId}: "${company.name}" (${company.slug}), integration ${integration.type}`,
-	);
 
 	return {
 		companyId: company.id,
@@ -71,7 +45,7 @@ async function loadFromDatabase(tokenId: string): Promise<Context | undefined> {
 }
 
 export const ContextProvider = {
-	async getContext(tokenId: string): Promise<Context | undefined> {
+	async getContext(tokenId: string): Promise<Context> {
 		const cached = cache.get(tokenId);
 
 		if (cached) {
@@ -79,21 +53,10 @@ export const ContextProvider = {
 			return cached;
 		}
 
-		try {
-			const context = await loadFromDatabase(tokenId);
-
-			if (!context) {
-				logger.debug(`getContext: Failed to load context for token ${tokenId}`);
-				return undefined;
-			}
-
-			cache.set(tokenId, context);
-			logger.debug(`getContext: ${tokenId} (miss)`);
-			return context;
-		} catch (error) {
-			logger.error(`getContext: Error loading context for token ${tokenId}: ${error}`);
-			return undefined;
-		}
+		logger.debug(`getContext: ${tokenId} (miss)`);
+		const context = await buildContext(tokenId);
+		cache.set(tokenId, context);
+		return context;
 	},
 
 	invalidate(tokenId: string) {
