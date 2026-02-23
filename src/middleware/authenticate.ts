@@ -1,15 +1,13 @@
-import crypto from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import type { Context } from "@/context/provider";
 import { ContextProvider } from "@/context/provider";
 import { db } from "@/database";
+import type { BaseRequest } from "@/middleware/request-id";
 import { hashToken } from "@/security/hash";
-import { createLogger, type Logger } from "@/shared/logger";
+import { createLogger } from "@/shared/logger";
 
-export type AuthenticatedRequest = Request & {
+export type AuthenticatedRequest = BaseRequest & {
 	context: Context;
-	requestId: string;
-	logger: Logger;
 };
 
 export const authenticate = async (
@@ -19,16 +17,6 @@ export const authenticate = async (
 	// biome-ignore lint/suspicious/noConfusingVoidType: stfu
 ): Promise<void | Response> => {
 	const req = _req as AuthenticatedRequest;
-	req.requestId = crypto.randomUUID();
-	req.logger = createLogger(`[${req.requestId}]`);
-
-	req.logger.info(`Incoming request: ${req.method} ${req.url}`);
-	req.logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
-	req.logger.debug(`Query: ${JSON.stringify(req.query)}`);
-	req.logger.debug(`Body: ${JSON.stringify(req.body)}`);
-	req.logger.debug(`Cookies: ${JSON.stringify(req.cookies)}`);
-	req.logger.debug(`Params: ${JSON.stringify(req.params)}`);
-	req.logger.debug(`IP: ${req.ip}`);
 
 	const authHeader = req.headers.authorization;
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -51,14 +39,14 @@ export const authenticate = async (
 
 		const ctx = await ContextProvider.getContext(token.id);
 		req.context = ctx;
+
+		// Enriquece o logger com o slug da empresa a partir daqui
 		req.logger = createLogger(`[${req.requestId}:${ctx.companySlug}]`);
-		req.logger.info(
-			`Authenticated: ${ctx.companyName} (${ctx.companySlug}), integration ${ctx.integrationType}`,
-		);
+		req.logger.info(`Authenticated: ${ctx.companyName}, integration ${ctx.integrationType}`);
 
 		return next();
 	} catch (error) {
-		req.logger.error("Authentication failed:", {
+		req.logger.error("Authentication failed", {
 			message: error instanceof Error ? error.message : "Unknown error",
 		});
 
