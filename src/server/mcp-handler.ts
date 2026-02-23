@@ -1,61 +1,56 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Response } from "express";
-import type { ClientContext } from "@/context/types";
-import type { AuthenticatedRequest } from "@/middleware/auth";
+import type { AuthenticatedRequest } from "@/middleware/authenticate";
 import { registerTools } from "@/tools";
 
-// source: https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.x/src/examples/server/simpleStatelessStreamableHttp.ts
+function parseMcpMethod(body: Record<string, unknown>): string {
+	const method = typeof body.method === "string" ? body.method : "unknown";
 
-export function getMcpHandler(context: ClientContext) {
-	return async (req: AuthenticatedRequest, res: Response) => {
-		req.logger?.debug("Creating MCP server instance");
-		const server = new McpServer(
-			{
-				name: `MCP-${context.clientId}`,
-				version: "1.0.0",
-			},
-			{
-				capabilities: {
-					logging: {},
-				},
-			},
-		);
+	if (method === "tools/call" && body.params && typeof body.params === "object") {
+		const name = (body.params as Record<string, unknown>).name;
+		if (typeof name === "string") return `tools/call:${name}`;
+	}
 
-		// Registrar tools com o contexto do cliente
-		req.logger?.debug("Registering tools");
-		registerTools(server, context, req.requestId);
+	return method;
+}
 
-		try {
-			const transport = new StreamableHTTPServerTransport({
-				sessionIdGenerator: undefined,
+export async function mcpHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
+	const { context, logger } = req;
+
+	const server = new McpServer(
+		{ name: `mcp-${context.companySlug}`, version: "1.0.0" },
+		{ capabilities: { logging: {} } },
+	);
+
+	registerTools(server, context, logger);
+
+	try {
+		const transport = new StreamableHTTPServerTransport({
+			sessionIdGenerator: undefined,
+		});
+
+		await server.connect(transport);
+
+		const method = parseMcpMethod(req.body);
+		logger.info(method);
+
+		await transport.handleRequest(req, res, req.body);
+
+		res.on("close", () => {
+			transport.close();
+			server.close();
+		});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		logger.error(`Error handling MCP request: ${message}`, { error });
+
+		if (!res.headersSent) {
+			res.status(500).json({
+				jsonrpc: "2.0",
+				error: { code: -32603, message: "Internal server error" },
+				id: null,
 			});
-
-			// req.logger?.debug("Connecting transport");
-			await server.connect(transport);
-
-			req.logger?.debug("Handling request", { body: req.body });
-			if (req?.body?.params?.name) {
-				// probably a tool call
-				req.logger?.info(`${req.body.method}/${req.body.params.name}`);
-			}
-			await transport.handleRequest(req, res, req.body);
-
-			res.on("close", () => {
-				req.logger?.info("Request closed, cleaning up");
-				transport.close();
-				server.close();
-			});
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			req.logger?.error(`Error handling MCP request: ${errorMessage || "no message"}`, { error });
-			if (!res.headersSent) {
-				res.status(500).json({
-					jsonrpc: "2.0",
-					error: { code: -32603, message: "Internal server error" },
-					id: null,
-				});
-			}
 		}
-	};
+	}
 }

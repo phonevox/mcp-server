@@ -3,7 +3,7 @@ import axios from "axios";
 import type { Logger } from "@/shared/logger";
 
 export interface CustomRequestConfig extends AxiosRequestConfig {
-	forceBody?: boolean; // force body on get request
+	forceBody?: boolean;
 }
 
 export interface HttpClientOptions {
@@ -35,38 +35,38 @@ export abstract class BaseHttpClient {
 	private setupInterceptors() {
 		if (!this.logger) return;
 
-		// Request interceptor
 		this.axios.interceptors.request.use(
 			(config) => {
-				this?.logger?.debug("HTTP → request", {
-					method: config.method?.toUpperCase(),
-					url: config.url,
-					// params: config.params,
-					// data: config.data,
+				// params vem de config.params (query string) ou config.data (body/GET não-convencional)
+				const params = config.params ?? config.data ?? undefined;
+
+				this.logger?.debug(`→ ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
+					...(params !== undefined && { params }),
 				});
+
 				return config;
 			},
 			(err) => {
-				this.logger?.error("HTTP → request interceptor error", { error: err });
+				this.logger?.error("Request interceptor error", { error: err });
 				return Promise.reject(err);
 			},
 		);
 
-		// Response interceptor
 		this.axios.interceptors.response.use(
 			(res) => {
-				this.logger?.debug("HTTP ← response", {
-					status: res.status,
+				this.logger?.debug(`← ${res.status} ${res.config.baseURL}${res.config.url}`, {
 					dataSize: JSON.stringify(res.data ?? {}).length,
 				});
 				return res;
 			},
 			(err: AxiosError) => {
-				this.logger?.error("HTTP ← error", {
-					status: err.response?.status,
-					message: err.message,
-					// data: err.response?.data,
-				});
+				this.logger?.error(
+					`← ${err.response?.status ?? "ERR"} ${err.config?.baseURL}${err.config?.url}`,
+					{
+						message: err.message,
+						data: err.response?.data,
+					},
+				);
 				return Promise.reject(err);
 			},
 		);
@@ -76,13 +76,8 @@ export abstract class BaseHttpClient {
 		const method = (config.method || "get").toUpperCase();
 		const url = config.url ?? null;
 
-		if (method === "GET" && config.data) {
-			this.logger?.warn("Your GET request has a body (this is against standards)");
-		}
-
 		try {
-			const response = await this.axios(config);
-			return response;
+			return await this.axios(config);
 		} catch (err) {
 			this.handleRequestError(err, { method, url });
 			throw err;
@@ -102,25 +97,20 @@ export abstract class BaseHttpClient {
 
 		if (axios.isAxiosError(error)) {
 			const status = error.response?.status;
-			let message = error.message || "HTTP Request error";
-
 			const errData = error.response?.data;
-			if (errData && typeof errData === "object") {
-				message =
-					(errData as any).mensagem ?? (errData as any).erro ?? (errData as any).message ?? message;
-			}
+			const message =
+				(errData as any)?.mensagem ??
+				(errData as any)?.erro ??
+				(errData as any)?.message ??
+				error.message ??
+				"HTTP request error";
 
-			this.logger?.error(`Request failed`, {
-				...context,
+			this.logger.error(`Request failed: ${context.method} ${context.url}`, {
 				status,
 				message,
-				// data: errData,           // descomente só se for seguro
 			});
 		} else {
-			this.logger?.error(`Unexpected request error`, {
-				...context,
-				error,
-			});
+			this.logger.error(`Unexpected error: ${context.method} ${context.url}`, { error });
 		}
 	}
 }

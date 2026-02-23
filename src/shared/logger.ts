@@ -16,7 +16,7 @@ function stripAnsi(str: string): string {
 }
 
 function sanitizeNamespace(ns: string) {
-	return ns.replace(/[^a-zA-Z0-9._-]/g, "");
+	return ns.replace(/[^a-zA-Z0-9._:-]/g, "");
 }
 
 const consoleFormat = combine(

@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { IxcSoftClient } from "@/services/ixcsoft/client";
+import { createIxcSoftClient } from "@/services/ixcsoft/helper";
 import { defineTool, type ToolDefinition } from "@/tools/core/tool";
 
 export const tool: ToolDefinition = defineTool(
@@ -7,14 +7,12 @@ export const tool: ToolDefinition = defineTool(
 	"Returns all departments",
 	z.object({}),
 )
-	.handler(async (ctx, params) => {
-		ctx.logger.info(`Searching contracts for client ID: "${params.id}"`);
+	.handler(async (ctx, _params) => {
+		const { context, logger } = ctx;
+		logger.info(`Searching departments for integration ID: "${context.integrationId}"`);
 
-		const ixcsoft = new IxcSoftClient(ctx.context, {
-			logger: ctx.logger?.child("IxcSoftClient"),
-		});
-
-		const response = await ixcsoft.getDepartments();
+		const client = await createIxcSoftClient(context);
+		const response = await client.getDepartments();
 
 		return {
 			departments: (response.registros || []).map((c) => ({

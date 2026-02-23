@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { IxcSoftClient } from "@/services/ixcsoft/client";
+import { createIxcSoftClient } from "@/services/ixcsoft/helper";
 import { defineTool, type ToolDefinition } from "@/tools/core/tool";
 
 export const tool: ToolDefinition = defineTool(
@@ -10,13 +10,11 @@ export const tool: ToolDefinition = defineTool(
 	}),
 )
 	.handler(async (ctx, params) => {
-		ctx.logger.info(`Searching contracts for client ID: "${params.id}"`);
+		const { context, logger } = ctx;
+		logger.info(`Searching contracts for client ID: "${params.id}"`);
 
-		const ixcsoft = new IxcSoftClient(ctx.context, {
-			logger: ctx.logger?.child("IxcSoftClient"),
-		});
-
-		const response = await ixcsoft.getContractsByClient(params.id);
+		const client = await createIxcSoftClient(context);
+		const response = await client.getContractsByClient(params.id);
 
 		return {
 			contracts: (response.registros || []).map((c) => ({

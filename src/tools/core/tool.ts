@@ -1,12 +1,10 @@
-// core/tool.ts
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodObject } from "zod";
-import type { ClientContext } from "@/context/types";
-import { createLogger, type Logger } from "@/shared/logger";
+import type { Context } from "@/context/provider";
+import type { Logger } from "@/shared/logger";
 
 export type ToolContext = {
-	requestId: string;
-	context: ClientContext;
+	context: Context;
 	logger: Logger;
 };
 
@@ -17,14 +15,9 @@ export type ToolDefinition = {
 		inputSchema: ZodObject<any>;
 		outputSchema?: ZodObject<any>;
 	};
-	handler: (
-		meta: { requestId: string },
-		context: ClientContext,
-		params: Record<string, unknown>,
-	) => Promise<CallToolResult>;
+	handler: (ctx: ToolContext, params: Record<string, unknown>) => Promise<CallToolResult>;
 };
 
-// Builder com interface fluente
 export class ToolBuilder<TParams extends Record<string, unknown>, TResult = unknown> {
 	private _name: string;
 	private _description: string;
@@ -45,9 +38,8 @@ export class ToolBuilder<TParams extends Record<string, unknown>, TResult = unkn
 		return this;
 	}
 
-	// Handler agora retorna um novo ToolBuilder com o tipo TResult inferido
 	handler<R>(fn: (ctx: ToolContext, params: TParams) => Promise<R>): ToolBuilder<TParams, R> {
-		const builder = this as any as ToolBuilder<TParams, R>;
+		const builder = this as unknown as ToolBuilder<TParams, R>;
 		builder._handler = fn;
 		return builder;
 	}
@@ -74,10 +66,8 @@ export class ToolBuilder<TParams extends Record<string, unknown>, TResult = unkn
 				inputSchema: this._inputSchema,
 				outputSchema: this._outputSchema,
 			},
-			handler: async (meta, context, params) => {
-				const logger = createLogger(meta.requestId);
-				const ctx: ToolContext = { requestId: meta.requestId, context, logger };
-
+			// logger vem propagado do request — não criamos um novo aqui
+			handler: async (ctx, params) => {
 				try {
 					const result = await this._handler(ctx, params as TParams);
 					const data = this._formatData?.(result) ?? result;
@@ -96,7 +86,7 @@ export class ToolBuilder<TParams extends Record<string, unknown>, TResult = unkn
 					};
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-					logger.error("Tool execution failed", { error, params });
+					ctx.logger.error("Tool execution failed", { error, params });
 
 					return {
 						content: [{ type: "text", text: `❌ ${errorMessage}` }],
@@ -112,7 +102,6 @@ export class ToolBuilder<TParams extends Record<string, unknown>, TResult = unkn
 	}
 }
 
-// Factory function simplificada
 export function defineTool<TInput extends ZodObject<any>>(
 	name: string,
 	description: string,

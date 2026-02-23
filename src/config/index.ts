@@ -9,4 +9,11 @@ export const config = {
 	JWT_SECRET: process.env.JWT_SECRET || null,
 
 	MCP_ALLOWED_HOSTS: process.env.MCP_ALLOWED_HOSTS?.toString().split(",") || ["*"],
+
+	DATABASE_URL: process.env.DATABASE_URL || undefined,
+
+	CONTEXT_CACHE_TTL: 60_000,
+	DB_TOKEN_CACHE_TTL: 60_000,
+	DB_COMPANY_CACHE_TTL: 60_000,
+	DB_INTEGRATION_CACHE_TTL: 60_000,
 } as const;
