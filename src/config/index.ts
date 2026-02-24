@@ -4,6 +4,7 @@ export const config = {
 
 	EXPRESS_PORT: parseInt(process.env.EXPRESS_PORT || "3000", 10),
 	EXPRESS_TRUST_PROXY: process.env.EXPRESS_TRUST_PROXY === "true" || true,
+	EXPRESS_API_TOKEN: process.env.EXPRESS_API_TOKEN || "my-secret-token",
 
 	ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || null,
 	JWT_SECRET: process.env.JWT_SECRET || null,

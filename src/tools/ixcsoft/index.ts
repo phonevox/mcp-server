@@ -1,5 +1,8 @@
-import { tool as getClientByDocument } from "@/tools/ixcsoft/getClientsByDocument";
-import { tool as getClientContracts } from "@/tools/ixcsoft/getContractsByClient";
-import { tool as getDepartments } from "@/tools/ixcsoft/getDepartments";
+import type { ToolRegistry } from "@/tools/_core/registry";
+import { listarClientesPeloDocumento } from "./listarClientesPeloDocumento";
+import { listarContratosPorCliente } from "./listarContratosPorCliente";
+import { listarDepartamentos } from "./listarDepartamentos";
 
-export const tools = [getClientByDocument, getClientContracts, getDepartments];
+export const registry: ToolRegistry = {
+	tools: [listarClientesPeloDocumento, listarContratosPorCliente, listarDepartamentos],
+};
