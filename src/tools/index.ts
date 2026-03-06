@@ -1,40 +1,23 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import * as z from "zod/v4";
 import type { Context } from "@/context/provider";
 import type { Logger } from "@/shared/logger";
-import { tools as ixcsoftTools } from "@/tools/ixcsoft";
+import { registerToolsFromRegistry, type ToolRegistry } from "@/tools/_core/registry";
+import { miscRegistry } from "@/tools/_misc";
+import { registry as ixcsoftRegistry } from "./ixcsoft";
 
-export function registerTools(server: McpServer, context: Context, logger: Logger) {
-	switch (context.integrationType) {
-		case "ixcsoft": {
-			for (const tool of ixcsoftTools) {
-				server.registerTool(tool.name, tool.schema, (params) =>
-					tool.handler({ context, logger: logger.child(tool.name) }, params),
-				);
-			}
-			logger.debug(`Registered ${ixcsoftTools.length} ixcsoft tools`, {
-				tools: ixcsoftTools.map((t) => t.name),
-			});
-			break;
-		}
+const integrationRegistries: Partial<Record<string, ToolRegistry>> = {
+	ixcsoft: ixcsoftRegistry,
+	// novaIntegracao: novaIntegracaoRegistry,
+};
 
-		default: {
-			logger.warn(`No tools registered for integration type: ${context.integrationType}`);
-			break;
-		}
+export function registerTools(server: McpServer, context: Context, logger: Logger): void {
+	const registry = integrationRegistries[context.integrationType];
+
+	if (registry) {
+		registerToolsFromRegistry(server, registry, context, logger);
+	} else {
+		logger.warn(`No tools registered for integration type: ${context.integrationType}`);
 	}
 
-	// misc tools — disponíveis para todos os clientes
-	server.registerTool(
-		"echo",
-		{
-			description: "Echoes back the provided message",
-			inputSchema: z.object({ message: z.string() }),
-			outputSchema: z.object({ echo: z.string() }),
-		},
-		async ({ message }) => ({
-			content: [{ type: "text", text: message }],
-			structuredContent: { echo: message },
-		}),
-	);
+	registerToolsFromRegistry(server, miscRegistry, context, logger);
 }
