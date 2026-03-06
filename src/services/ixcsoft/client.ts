@@ -3,6 +3,7 @@ import {
 	ListClientResponseSchema,
 	ListContractResponseSchema,
 	ListDepartmentsResponseSchema,
+	ListFaturasResponseSchema,
 } from "@/services/ixcsoft/schemas";
 import { createLogger } from "@/shared/logger";
 
@@ -25,6 +26,10 @@ export class IxcSoftClient extends BaseHttpClient {
 	}
 
 	protected override async request<T = any>(config: Parameters<BaseHttpClient["request"]>[0]) {
+		if (config?.data?.grid_param) {
+			logger.debug("Stringifying grid_param ->", config.data.grid_param);
+			config.data.grid_param = JSON.stringify(config.data.grid_param);
+		}
 		const response = await super.request<T>(config);
 		const data: any = response.data;
 
@@ -85,7 +90,7 @@ export class IxcSoftClient extends BaseHttpClient {
 				rp: "999",
 				sortname: "cliente_contrato.id",
 				sortorder: "desc",
-				gridParam: [{ TB: "cliente_contrato.status", OP: "IN", P: '"A","P","N"' }],
+				grid_param: [{ TB: "cliente_contrato.status", OP: "IN", P: '"A","P","N"' }],
 			},
 		});
 		return ListContractResponseSchema.parse(response.data);
@@ -103,5 +108,47 @@ export class IxcSoftClient extends BaseHttpClient {
 			},
 		});
 		return ListDepartmentsResponseSchema.parse(response.data);
+	}
+
+	async getFaturasByClient(clientId: string) {
+		const response = await this.request({
+			method: "GET",
+			url: "/webservice/v1/fn_areceber",
+			headers: { ixcsoft: "listar" },
+			data: {
+				qtype: "fn_areceber.id_cliente",
+				query: clientId,
+				oper: "=",
+				page: "1",
+				rp: "999",
+				sortname: "fn_areceber.data_vencimento",
+				sortorder: "desc",
+				// grid_param: [{ TB: "fn_areceber.status", OP: "=", P: "A" }],
+			},
+		});
+		return ListFaturasResponseSchema.parse(response.data);
+	}
+
+	async getFaturasByContract(contractId: string) {
+		const response = await this.request({
+			method: "GET",
+			url: "/webservice/v1/fn_areceber",
+			headers: { ixcsoft: "listar" },
+			data: {
+				qtype: "fn_areceber.id_contrato",
+				query: contractId,
+				oper: "=",
+				page: "1",
+				rp: "999",
+				sortname: "fn_areceber.data_vencimento",
+				sortorder: "desc",
+				// @NOTE: vou listar todas as faturas e deixar a responsabilidade de filtrar abertas/vencidas para o usuário
+				// grid_param: [
+				// 	{ TB: "fn_areceber.status", OP: "=", P: "A" } ,
+				// 	{ TB: "fn_areceber.data_vencimento", OP: "<", P: new Date().toISOString().substr(0, 10) + " 00:00:00"}
+				// ],
+			},
+		});
+		return ListFaturasResponseSchema.parse(response.data);
 	}
 }
