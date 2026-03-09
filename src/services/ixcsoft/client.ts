@@ -14,6 +14,34 @@ export type IxcSoftConfig = {
 	token: string;
 };
 
+function formatarNumeroTelefonico(numero: string | number): string {
+	// Remove tudo que não é dígito
+	let digitos = String(numero).replace(/\D/g, "");
+
+	if (!digitos) return "";
+
+	// Remove 0 inicial de DDD (ex: 011 → 11)
+	if (digitos.length >= 11 && digitos.startsWith("0")) {
+		digitos = digitos.slice(1);
+	}
+
+	const len = digitos.length;
+
+	if (len === 8) return `${digitos.slice(0, 4)}-${digitos.slice(4)}`; // 3265-4321
+	if (len === 9) return `${digitos.slice(0, 5)}-${digitos.slice(5)}`; // 99162-7865
+	if (len === 10) return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`; // (11) 3265-4321
+	if (len === 11) return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`; // (11) 99162-7865
+
+	// Mais de 11 dígitos → pega os últimos 11 (comum com +55)
+	if (len > 11) {
+		digitos = digitos.slice(-11);
+		return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+	}
+
+	// Caso inválido ou incompleto → retorna limpo
+	return digitos;
+}
+
 export class IxcSoftClient extends BaseHttpClient {
 	constructor(config: IxcSoftConfig) {
 		super({
@@ -74,6 +102,27 @@ export class IxcSoftClient extends BaseHttpClient {
 		});
 		const data = ListClientResponseSchema.parse(response.data);
 		logger.info("getClientByDocument success", { total: data.total ?? 0, page: data.page });
+		return data;
+	}
+
+	async getClientByCelular(celular: string) {
+		const response = await this.request({
+			method: "GET",
+			url: "/webservice/v1/cliente",
+			headers: { ixcsoft: "listar" },
+			data: {
+				qtype: "cliente.telefone_celular",
+				query: formatarNumeroTelefonico(celular),
+				oper: "=",
+				page: "1",
+				rp: "50",
+				sortname: "cliente.id",
+				sortorder: "asc",
+			},
+		});
+		logger.debug("getClientByCelular response", response.data);
+		const data = ListClientResponseSchema.parse(response.data);
+		logger.info("getClientByCelular success", { total: data.total ?? 0, page: data.page });
 		return data;
 	}
 
